@@ -1,3 +1,5 @@
+"""Code used to track 1-year total returns to help enable a hot potato index.
+"""
 import urllib.request as urllib2
 import json
 from mailjet_rest import Client
@@ -5,10 +7,26 @@ import os
 import pandas as pd
 
 def get_url(ticker):
+    """Takes in a stock ticker and returns the relevant Yahoo Finance link.
+    
+    Args:
+        ticker(str): the ticker whose info we want
+    
+    Returns:
+        str: the Yahoo Finance URL of the supplied ticker
+    """
     url='https://finance.yahoo.com/quote/{}/performance?p={}'.format(ticker, ticker)
     return url
 
 def get_yearly_return(ticker):
+    """Takes in a stock ticker and returns the 1-year total return.
+    
+    Args:
+        ticker(str): the ticker whose info we want
+    
+    Returns:
+        float: the total 1-year return for the ticker
+    """
     url = get_url(ticker)
     content = urllib2.urlopen(url).read().decode('utf-8')
     starting = content.find('trailingReturns')+17
@@ -18,6 +36,12 @@ def get_yearly_return(ticker):
     return jsonList['oneYear']['raw']
 
 def send_email(pct, name_mapping):
+    """Takes in a stock ticker and returns the 1-year total return.
+    
+    Args:
+        pct(dict): maps between stock tickers and 1-year total returns
+        name_mapping(dict): maps between stock tickers and their definitions
+    """
     pct_nice_name = {}
     for key in pct.keys():
         pct_nice_name[key[:-3]] = pct[key]
@@ -54,7 +78,14 @@ def send_email(pct, name_mapping):
     result = mailjet.send.create(data=data)
 
 def kickoff(request):
+    """Function which orchestrates the rest of the code.
+    
+    Args:
+        request: passed as part of the Google Function orchestration service. Not used.
+    """
+    # tickers for which we want reports
     tickers = ['VCN.TO', 'VLB.TO', 'VFV.TO', 'VIU.TO']
+    # dictionary connecting tickers to readible names. Used in email.
     name_mapping = {'VCN': 'Canada stocks',
                     'VLB': 'Canada Bonds',
                     'VFV': 'S&P 500 Index',
