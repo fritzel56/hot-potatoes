@@ -22,8 +22,12 @@ This section aims to walk someone who has a google project but is unfamiliar wit
 
 ### Cloud Functions
 
-Start by creating a google cloud function. From the console home page, search for function and click on *Cloud Functions*  ![Finding Functions](https://github.com/fritzel56/hot-potatoes/blob/implementation/go-to-cloud-functions.png)
+Start by creating a google cloud function. From the console home page, search for function and click on *Cloud Functions*
 
-Next, click *Create Function*. ![Create Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/click-create-function.png)
+![Finding Functions](https://github.com/fritzel56/hot-potatoes/blob/implementation/go-to-cloud-functions.png)
+
+Next, click *Create Function*.
+
+![Create Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/click-create-function.png)
 
 This will bring up the main page to create a cloud function. (1) choose a name. (2) choose python 3.7 under runtime. (3) copy the code from hot_potato.py into the main.py text box. (4) copy the text from requirement.py in this repo into the requirement.py text box (image below). (5) put kickoff into the *Function to execute* box. (6) click Environment variables, networking, timeouts, and more to bring up more options.
