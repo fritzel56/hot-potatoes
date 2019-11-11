@@ -24,23 +24,23 @@ This section aims to walk someone who has a google project but is unfamiliar wit
 
 Start by creating a google cloud function. From the console home page, search for function and click on *Cloud Functions*
 
-![Finding Functions](https://github.com/fritzel56/hot-potatoes/blob/implementation/go-to-cloud-functions.png)
+![Finding Functions](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/go-to-cloud-functions.png)
 
 Next, click *Create Function*.
 
-![Create Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/click-create-function.png)
+![Create Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/click-create-function.png)
 
 This will bring up the main page to create a cloud function. (1) choose a name. (2) choose python 3.7 under runtime. (3) copy the code from hot_potato.py into the main.py text box. (4) copy the text from requirement.py in this repo into the requirement.py text box (image below). (5) put kickoff into the *Function to execute* box. (6) click Environment variables, networking, timeouts, and more to bring up more options.
 
-![Create Function v1](https://github.com/fritzel56/hot-potatoes/blob/implementation/create-function.png)
+![Create Function v1](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/create-function.png)
 
 And here is a view of the requirements.txt set up.
 
-![Create Function v1](https://github.com/fritzel56/hot-potatoes/blob/implementation/requirements.png)
+![Create Function v1](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/requirements.png)
 
 Scroll down until you see the *Environment* section and then click *Add Variable*.
 
-![Add Variables](https://github.com/fritzel56/hot-potatoes/blob/implementation/add-variable.png)
+![Add Variables](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/add-variable.png)
 
 Create four new variables: 
 * contact_email: the email to send updates from and to
@@ -50,4 +50,4 @@ Create four new variables:
 
 and finally, click *Create*.
 
-![Create](https://github.com/fritzel56/hot-potatoes/blob/implementation/fill-variables-and-create.png)
+![Create](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/fill-variables-and-create.png)
