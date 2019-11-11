@@ -15,3 +15,13 @@ Cloud Functions was used to run the code I used the smallest memory allocation a
 ### Scheduling
 Cloud Scheduler was used to kick off the job. It uses an HTTP target which is then used as the trigger for the Cloud Function.
 ### Emailing
+
+## Visual How To With Inline text
+
+This section aims to walk someone who has a google project but is unfamiliar with the google cloud environment through getting this project up and running.
+
+### Cloud Functions
+
+Start by creating a google cloud function. From the console home page, search for function and click on *Cloud Functions*  ![Finding Functions](https://github.com/fritzel56/hot-potatoes/blob/implementation/go-to-cloud-functions.png)
+
+Next, click *Create Function*. ![Create Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/click-create-function.png)
