@@ -51,3 +51,5 @@ Create four new variables:
 and finally, click *Create*.
 
 ![Create](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/fill-variables-and-create.png)
+
+At this point, we have a working function that will be triggered whenever the URL specified is visited. Next we add to add a scheduling function which will that URL end point at a regular frequency.
