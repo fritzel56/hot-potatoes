@@ -31,3 +31,9 @@ Next, click *Create Function*.
 ![Create Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/click-create-function.png)
 
 This will bring up the main page to create a cloud function. (1) choose a name. (2) choose python 3.7 under runtime. (3) copy the code from hot_potato.py into the main.py text box. (4) copy the text from requirement.py in this repo into the requirement.py text box (image below). (5) put kickoff into the *Function to execute* box. (6) click Environment variables, networking, timeouts, and more to bring up more options.
+
+![Create Function v1](https://github.com/fritzel56/hot-potatoes/blob/implementation/create-function.png)
+
+And here is a view of the requirements.txt set up.
+
+![Create Function v1](https://github.com/fritzel56/hot-potatoes/blob/implementation/requirements.png)
