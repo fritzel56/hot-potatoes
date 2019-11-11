@@ -37,3 +37,17 @@ This will bring up the main page to create a cloud function. (1) choose a name. 
 And here is a view of the requirements.txt set up.
 
 ![Create Function v1](https://github.com/fritzel56/hot-potatoes/blob/implementation/requirements.png)
+
+Scroll down until you see the *Environment* section and then click *Add Variable*.
+
+![Add Variables](https://github.com/fritzel56/hot-potatoes/blob/implementation/add-variable.png)
+
+Create four new variables: 
+* contact_email: the email to send updates from and to
+* contact_name: the name the emails should be addressed to
+* api_key: your API key for Mailjet (see Emailing below)
+* api_secret: your API secret for Mailjet (see Emailing below)
+
+and finally, click *Create*.
+
+![Create](https://github.com/fritzel56/hot-potatoes/blob/implementation/fill-variables-and-create.png)
