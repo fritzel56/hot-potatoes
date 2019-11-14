@@ -24,15 +24,15 @@ This section aims to walk someone who has a google project but is unfamiliar wit
 ### Emailing
 To use Mailjet, set up a new account and choose the Developer option on their first landing page.
 
-![Developer option](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/mailjet-developer-option.png)
+![Developer option](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/mailjet-developer-option.png)
 
 On the next page, keep the default for API and click continue.
 
-![Select API](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/mailjet-select-api.png)
+![Select API](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/mailjet-select-api.png)
 
 Choose python for your programming language and feel free to read the code. Most importantly though, you'll need to copy and paste the api_key/api_secret info to get the emails working in the Cloud Function section below.
 
-![API Secrent and Key](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/api-secret-and-key.png)
+![API Secrent and Key](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/api-secret-and-key.png)
 
 Having done this, you're ready to move on to getting the code onto Google Functions.
 
@@ -40,23 +40,23 @@ Having done this, you're ready to move on to getting the code onto Google Functi
 
 Start by creating a google cloud function. From the console home page, search for function and click on *Cloud Functions*
 
-![Finding Functions](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/go-to-cloud-functions.png)
+![Finding Functions](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/go-to-cloud-functions.png)
 
 Next, click *Create Function*.
 
-![Create Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/click-create-function.png)
+![Create Function](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/click-create-function.png)
 
 This will bring up the main page to create a cloud function. (1) choose a name. (2) choose python 3.7 under runtime. (3) copy the code from hot_potato.py into the main.py text box. (4) copy the text from requirement.py in this repo into the requirement.py text box (image below). (5) put kickoff into the *Function to execute* box. (6) click Environment variables, networking, timeouts, and more to bring up more options.
 
-![Create Function v1](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/create-function.png)
+![Create Function v1](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/create-function.png)
 
 And here is a view of the requirements.txt set up.
 
-![Create Function v1](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/requirements.png)
+![Create Function v1](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/requirements.png)
 
 Scroll down until you see the *Environment* section and then click *Add Variable*.
 
-![Add Variables](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/add-variable.png)
+![Add Variables](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/add-variable.png)
 
 Create four new variables: 
 * contact_email: the email to send updates from and to
@@ -66,16 +66,16 @@ Create four new variables:
 
 and finally, click *Create*.
 
-![Create](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/fill-variables-and-create.png)
+![Create](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/fill-variables-and-create.png)
 
 At this point, we have a working function that will be triggered whenever the URL specified is visited. Next we add to add a scheduling function which will that URL end point at a regular frequency. You should be able to trigger it manually as follows. To start, from the functions home page, click on your function.
 
-![Click to Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/click-to-function.png)
+![Click to Function](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/click-to-function.png)
 
 Select the *Trigger* tab and then click on the URL.
 
-![Trigger Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/manual-trigger.png)
+![Trigger Function](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/manual-trigger.png)
 
 This will open a new page which should eventually load a simple *OK* message and you should receive your email shortly.
 
-![OK Result](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/ok-result.png)
+![OK Result](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/ok-result.png)
