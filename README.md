@@ -15,10 +15,13 @@ Cloud Functions was used to run the code I used the smallest memory allocation a
 ### Scheduling
 Cloud Scheduler was used to kick off the job. It uses an HTTP target which is then used as the trigger for the Cloud Function.
 ### Emailing
+In this example, I chose to use Mailjet. Mostly I was interested in seeing how working with a third pary mail service would work. No specific reason for choosing Mailjet other than that they have an always free tier.
 
 ## Visual How To With Inline text
 
 This section aims to walk someone who has a google project but is unfamiliar with the google cloud environment through getting this project up and running.
+
+
 
 ### Cloud Functions
 
