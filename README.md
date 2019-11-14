@@ -4,3 +4,78 @@ This work was inspired by [this article](https://www.theglobeandmail.com/investi
 The name is inspired by the idea of the couch potato portfolio. This is an investing approach widely discussed online which encourages in investing in index tracking ETFs and holding for the long term. By contrast, the hot potato approach suggested that we should take the same ETF basket (in this case suggested as Canadian stocks, Canadian bonds, US stocks, and internation stocks) and, each month, invest all money in the ETF which had the highest total return over the last 12 months.
 ## Problem Statement
 The idea seemed interesting but I thought there was a decent chance that I might forget to collect the needed info at the end of every month. The purpose of this code is to collect 1-year total returns from Yahoo Finance.
+## Implementation
+The project was in part an excuse to play with cloud infrastructure. Google Cloud was largely used to implement the project. Google Cloud is nice because they have an always free tier.
+### Compute
+Cloud Functions was used to run the code I used the smallest memory allocation and and HTTP trigger (using Google Scheduler -- see below). At the bottom of the setup page you can select _Environment variables, networking, timeouts and more_. I added environment variables for sensitive variables. Specifically, to run this code, you need to set environment variables for:
+* contact_email: the email to send updates from and to
+* contact_name: the name the emails should be addressed to
+* api_key: your API key for Mailjet (see Emailing below)
+* api_secret: your API secret for Mailjet (see Emailing below)
+### Scheduling
+Cloud Scheduler was used to kick off the job. It uses an HTTP target which is then used as the trigger for the Cloud Function.
+### Emailing
+In this example, I chose to use Mailjet. Mostly I was interested in seeing how working with a third pary mail service would work. No specific reason for choosing Mailjet other than that they have an always free tier.
+
+## Visual How To With Inline text
+
+This section aims to walk someone who has a google project but is unfamiliar with the google cloud environment through getting this project up and running.
+
+### Emailing
+To use Mailjet, set up a new account and choose the Developer option on their first landing page.
+
+![Developer option](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/mailjet-developer-option.png)
+
+On the next page, keep the default for API and click continue.
+
+![Select API](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/mailjet-select-api.png)
+
+Choose python for your programming language and feel free to read the code. Most importantly though, you'll need to copy and paste the api_key/api_secret info to get the emails working in the Cloud Function section below.
+
+![API Secrent and Key](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/api-secret-and-key.png)
+
+Having done this, you're ready to move on to getting the code onto Google Functions.
+
+### Cloud Functions
+
+Start by creating a google cloud function. From the console home page, search for function and click on *Cloud Functions*
+
+![Finding Functions](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/go-to-cloud-functions.png)
+
+Next, click *Create Function*.
+
+![Create Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/click-create-function.png)
+
+This will bring up the main page to create a cloud function. (1) choose a name. (2) choose python 3.7 under runtime. (3) copy the code from hot_potato.py into the main.py text box. (4) copy the text from requirement.py in this repo into the requirement.py text box (image below). (5) put kickoff into the *Function to execute* box. (6) click Environment variables, networking, timeouts, and more to bring up more options.
+
+![Create Function v1](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/create-function.png)
+
+And here is a view of the requirements.txt set up.
+
+![Create Function v1](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/requirements.png)
+
+Scroll down until you see the *Environment* section and then click *Add Variable*.
+
+![Add Variables](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/add-variable.png)
+
+Create four new variables: 
+* contact_email: the email to send updates from and to
+* contact_name: the name the emails should be addressed to
+* api_key: your API key for Mailjet (see Emailing section above)
+* api_secret: your API secret for Mailjet (see Emailing section above)
+
+and finally, click *Create*.
+
+![Create](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/fill-variables-and-create.png)
+
+At this point, we have a working function that will be triggered whenever the URL specified is visited. Next we add to add a scheduling function which will that URL end point at a regular frequency. You should be able to trigger it manually as follows. To start, from the functions home page, click on your function.
+
+![Click to Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/click-to-function.png)
+
+Select the *Trigger* tab and then click on the URL.
+
+![Trigger Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/manual-trigger.png)
+
+This will open a new page which should eventually load a simple *OK* message and you should receive your email shortly.
+
+![OK Result](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/ok-result.png)
