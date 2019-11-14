@@ -21,7 +21,20 @@ In this example, I chose to use Mailjet. Mostly I was interested in seeing how w
 
 This section aims to walk someone who has a google project but is unfamiliar with the google cloud environment through getting this project up and running.
 
+### Emailing
+To use Mailjet, set up a new account and choose the Developer option on their first landing page.
 
+![Developer option](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/mailjet-developer-option.png)
+
+On the next page, keep the default for API and click continue.
+
+![Select API](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/mailjet-select-api.png)
+
+Choose python for your programming language and feel free to read the code. Most importantly though, you'll need to copy and paste the api_key/api_secret info to get the emails working in the Cloud Function section below.
+
+![API Secrent and Key](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/api-secret-and-key.png)
+
+Having done this, you're ready to move on to getting the code onto Google Functions.
 
 ### Cloud Functions
 
@@ -48,8 +61,8 @@ Scroll down until you see the *Environment* section and then click *Add Variable
 Create four new variables: 
 * contact_email: the email to send updates from and to
 * contact_name: the name the emails should be addressed to
-* api_key: your API key for Mailjet (see Emailing below)
-* api_secret: your API secret for Mailjet (see Emailing below)
+* api_key: your API key for Mailjet (see Emailing section above)
+* api_secret: your API secret for Mailjet (see Emailing section above)
 
 and finally, click *Create*.
 
