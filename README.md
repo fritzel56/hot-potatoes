@@ -52,4 +52,14 @@ and finally, click *Create*.
 
 ![Create](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/fill-variables-and-create.png)
 
-At this point, we have a working function that will be triggered whenever the URL specified is visited. Next we add to add a scheduling function which will that URL end point at a regular frequency.
+At this point, we have a working function that will be triggered whenever the URL specified is visited. Next we add to add a scheduling function which will that URL end point at a regular frequency. You should be able to trigger it manually as follows. To start, from the functions home page, click on your function.
+
+![Click to Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/click-to-function.png)
+
+Select the *Trigger* tab and then click on the URL.
+
+![Trigger Function](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/manual-trigger.png)
+
+This will open a new page which should eventually load a simple *OK* message and you should receive your email shortly.
+
+![OK Result](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/ok-result.png)
