@@ -79,3 +79,19 @@ Select the *Trigger* tab and then click on the URL.
 This will open a new page which should eventually load a simple *OK* message and you should receive your email shortly.
 
 ![OK Result](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/ok-result.png)
+
+### Scheduler
+
+In order to get the job to run automatically, we need a scheduler. To do this, we're going to use Cloud Scheduler. Head on over there:
+
+![Go to Scheduler](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/go-to-scheduler.png)
+
+Click *Create Job* to get a new job set up.
+
+![Create Scheduler Job](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/create-scheduler-job.png)
+
+And set up the job as follows. The configuration below will kick off the job daily at 5 PM Eastern. Paste the URL tied to your function into the URL box (see the the information on triggering your job manually above if you need to find your URL).
+
+![Set up Scheduler](https://github.com/fritzel56/hot-potatoes/blob/implementation/images/scheduler-set-up.png)
+
+Note the results will only update once a month. I still have the job running daily as I don't fully understand Yahoo Finance's update frequency yet. Once I do, I'll update it to only send the email once a  month.
