@@ -48,7 +48,6 @@ Choose python for your programming language and feel free to read the code. Most
 Having done this, you're ready to move on to getting the code onto Google Functions.
 
 ### Cloud Functions
-
 Start by creating a Google Cloud Function. From the console home page, search for function and click on *Cloud Functions*
 
 ![Finding Functions](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/go-to-cloud-functions.png)
@@ -92,7 +91,6 @@ This will open a new page which should eventually load a simple *OK* message and
 ![OK Result](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/ok-result.png)
 
 ### Scheduler
-
 In order to get the job to run automatically, we need a scheduler. To do this, we're going to use Cloud Scheduler. Head on over there:
 
 ![Go to Scheduler](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/go-to-scheduler.png)
