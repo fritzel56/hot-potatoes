@@ -30,7 +30,6 @@ Cloud Scheduler is used to kick off the job. It hits the HTTP target associated 
 In this example, I chose to use Mailjet. Mostly I was interested in seeing how working with a third party mail service would work. No specific reason for choosing Mailjet other than that they have an always free tier.
 
 ## Visual How To
-
 This section aims to walk someone with minimal expertize through getting this project up and running.
 
 ### Mailjet Setup
