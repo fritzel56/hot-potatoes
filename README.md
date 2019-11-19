@@ -5,7 +5,7 @@ The name is inspired by the idea of the couch potato portfolio. This is an inves
 ## Problem Statement
 The idea seemed interesting but I thought there was a decent chance that I might forget to collect the needed info at the end of every month. The purpose of this code is to collect 1-year total returns from Yahoo Finance.
 ## Implementation
-The project was in part an excuse to play with cloud infrastructure. Google Cloud was largely used to implement the project. Google Cloud is nice because they have an always free tier.
+The project was in part an excuse to play with cloud infrastructure. Google Cloud was largely used to implement the project. Google Cloud is nice because they have an always free tier. I originally wanted to pull the data from Vanguard directly but the way they structured their website makes it quite hard to scrape. I chose to go with Yahoo Finance as it also has 1-year Monthly Total Return and is much easier to scrape.
 ### Compute
 Cloud Functions was used to run the code I used the smallest memory allocation and and HTTP trigger (using Google Scheduler -- see below). At the bottom of the setup page you can select _Environment variables, networking, timeouts and more_. I added environment variables for sensitive variables. Specifically, to run this code, you need to set environment variables for:
 * contact_email: the email to send updates from and to
@@ -58,7 +58,7 @@ Scroll down until you see the *Environment* section and then click *Add Variable
 
 ![Add Variables](https://raw.githubusercontent.com/fritzel56/hot-potatoes/master/images/add-variable.png)
 
-Create four new variables: 
+Create four new variables:
 * contact_email: the email to send updates from and to
 * contact_name: the name the emails should be addressed to
 * api_key: your API key for Mailjet (see Emailing section above)
