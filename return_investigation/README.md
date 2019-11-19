@@ -5,8 +5,8 @@ I wanted to make sure I understood how the total returns are calculated. To do t
 ## File Overview
 
 | File | Description |
-|--------|-----------|
+|------|-------------|
 | dividends.csv | Record of when dividends were paid and how much they were. Data taken from Yahoo Finance. |
+| returns_investigation.ipynb | Notebook with analysis performed. |
 | VCN.TO.csv | Daily stock price data pulled from Yahoo Finance. |
 | vcn_monthly_total_returns.csv | Monthly total return data pulled from the Vanguard website. |
-
