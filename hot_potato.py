@@ -8,10 +8,10 @@ import pandas as pd
 
 def get_url(ticker):
     """Takes in a stock ticker and returns the relevant Yahoo Finance link.
-    
+
     Args:
         ticker(str): the ticker whose info we want
-    
+
     Returns:
         str: the Yahoo Finance URL of the supplied ticker
     """
@@ -20,10 +20,10 @@ def get_url(ticker):
 
 def get_yearly_return(ticker):
     """Takes in a stock ticker and returns the 1-year total return.
-    
+
     Args:
         ticker(str): the ticker whose info we want
-    
+
     Returns:
         float: the total 1-year return for the ticker
     """
@@ -36,8 +36,9 @@ def get_yearly_return(ticker):
     return jsonList['oneYear']['raw']
 
 def send_email(pct, name_mapping):
-    """Takes in a stock ticker and returns the 1-year total return.
-    
+    """Sends an email whose subject lists the highest performing stock
+       and which includes a table showing all stock performance.
+
     Args:
         pct(dict): maps between stock tickers and 1-year total returns
         name_mapping(dict): maps between stock tickers and their definitions
@@ -79,7 +80,7 @@ def send_email(pct, name_mapping):
 
 def kickoff(request):
     """Function which orchestrates the rest of the code.
-    
+
     Args:
         request: passed as part of the Google Function orchestration service. Not used.
     """
