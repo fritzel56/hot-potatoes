@@ -5,6 +5,7 @@ import json
 from mailjet_rest import Client
 import os
 import pandas as pd
+import yaml
 
 def get_url(ticker):
     """Takes in a stock ticker and returns the relevant Yahoo Finance link.
@@ -77,19 +78,19 @@ def send_email(pct, name_mapping):
     }
     result = mailjet.send.create(data=data)
 
+
 def kickoff(request):
-    """Function which orchestrates the rest of the code.
+    """Function which orchestrates the rest of the code
 
     Args:
         request: passed as part of the Google Function orchestration service. Not used.
     """
+    with open('stocks.yaml') as f:
+        data = yaml.load(f, Loader=yaml.FullLoader)
     # tickers for which we want reports
-    tickers = ['VCN.TO', 'VLB.TO', 'VFV.TO', 'VIU.TO']
+    tickers = data['tickers']
     # dictionary connecting tickers to readible names. Used in email.
-    name_mapping = {'VCN': 'Canada stocks',
-                    'VLB': 'Canada Bonds',
-                    'VFV': 'S&P 500 Index',
-                    'VIU': 'ex-NA stocks'}
+    name_mapping = data['mapping']
     pct = {}
     for ticker in tickers:
         pct[ticker] = get_yearly_return(ticker)
