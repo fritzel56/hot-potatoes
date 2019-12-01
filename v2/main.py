@@ -5,25 +5,24 @@ import json
 from mailjet_rest import Client
 import os
 import pandas as pd
+import yaml
+
 
 def get_url(ticker):
     """Takes in a stock ticker and returns the relevant Yahoo Finance link.
-
     Args:
         ticker(str): the ticker whose info we want
-
     Returns:
         str: the Yahoo Finance URL of the supplied ticker
     """
-    url='https://finance.yahoo.com/quote/{}/performance?p={}'.format(ticker, ticker)
+    url = 'https://finance.yahoo.com/quote/{}/performance?p={}'.format(ticker, ticker)
     return url
+
 
 def get_yearly_return(ticker):
     """Takes in a stock ticker and returns the 1-year total return.
-
     Args:
         ticker(str): the ticker whose info we want
-
     Returns:
         float: the total 1-year return for the ticker
     """
@@ -35,10 +34,10 @@ def get_yearly_return(ticker):
     jsonList = json.loads(tree)
     return jsonList['oneYear']['raw']
 
-def send_email(pct, name_mapping):
-    """Sends an email whose subject lists the highest performing stock
-       and which includes a table showing all stock performance.
 
+def compose_summary_email(pct, name_mapping):
+    """Composes an email whose subject lists the highest performing stock
+       and which includes a table showing all stock performance.
     Args:
         pct(dict): maps between stock tickers and 1-year total returns
         name_mapping(dict): maps between stock tickers and their definitions
@@ -53,11 +52,8 @@ def send_email(pct, name_mapping):
     df_tot = df_pct.transpose().merge(right=df_name.transpose(), left_index=True, right_index=True)
     df_tot = df_tot.sort_values(by='YTD', ascending=False).transpose()
     summary_table = df_tot.to_html()
-    api_key = os.environ['api_key']
-    api_secret = os.environ['api_secret']
     contact_email = os.environ['contact_email']
     contact_name = os.environ['contact_name']
-    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
     data = {
       'Messages': [
         {
@@ -76,22 +72,33 @@ def send_email(pct, name_mapping):
         }
       ]
     }
-    result = mailjet.send.create(data=data)
+    return data
+
+
+def send_email(email):
+    """Takes in a composed email and sends it using the mailjet api
+    Args:
+        email(dict): dict containing all relevant fields needed by the mailjet API
+    """
+    api_key = os.environ['api_key']
+    api_secret = os.environ['api_secret']
+    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+    result = mailjet.send.create(data=email)
+
 
 def kickoff(request):
-    """Function which orchestrates the rest of the code.
-
+    """Function which orchestrates the rest of the code
     Args:
         request: passed as part of the Google Function orchestration service. Not used.
     """
+    with open('stocks.yaml') as f:
+        data = yaml.load(f, Loader=yaml.FullLoader)
     # tickers for which we want reports
-    tickers = ['VCN.TO', 'VLB.TO', 'VFV.TO', 'VIU.TO']
+    tickers = data['tickers']
     # dictionary connecting tickers to readible names. Used in email.
-    name_mapping = {'VCN': 'Canada stocks',
-                    'VLB': 'Canada Bonds',
-                    'VFV': 'S&P 500 Index',
-                    'VIU': 'ex-NA stocks'}
+    name_mapping = data['mapping']
     pct = {}
     for ticker in tickers:
         pct[ticker] = get_yearly_return(ticker)
-    send_email(pct, name_mapping)
+    email = compose_summary_email(pct, name_mapping)
+    send_email(email)
