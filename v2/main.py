@@ -35,8 +35,9 @@ def get_yearly_return(ticker):
     return jsonList['oneYear']['raw']
 
 
-def send_email(pct, name_mapping):
-    """Takes in a stock ticker and returns the 1-year total return.
+def compose_summary_email(pct, name_mapping):
+    """Composes an email whose subject lists the highest performing stock
+       and which includes a table showing all stock performance.
     Args:
         pct(dict): maps between stock tickers and 1-year total returns
         name_mapping(dict): maps between stock tickers and their definitions
@@ -51,11 +52,8 @@ def send_email(pct, name_mapping):
     df_tot = df_pct.transpose().merge(right=df_name.transpose(), left_index=True, right_index=True)
     df_tot = df_tot.sort_values(by='YTD', ascending=False).transpose()
     summary_table = df_tot.to_html()
-    api_key = os.environ['api_key']
-    api_secret = os.environ['api_secret']
     contact_email = os.environ['contact_email']
     contact_name = os.environ['contact_name']
-    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
     data = {
       'Messages': [
         {
@@ -74,7 +72,18 @@ def send_email(pct, name_mapping):
         }
       ]
     }
-    result = mailjet.send.create(data=data)
+    return data
+
+
+def send_email(email):
+    """Takes in a composed email and sends it using the mailjet api
+    Args:
+        email(dict): dict containing all relevant fields needed by the mailjet API
+    """
+    api_key = os.environ['api_key']
+    api_secret = os.environ['api_secret']
+    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+    result = mailjet.send.create(data=email)
 
 
 def kickoff(request):
@@ -91,4 +100,5 @@ def kickoff(request):
     pct = {}
     for ticker in tickers:
         pct[ticker] = get_yearly_return(ticker)
-    send_email(pct, name_mapping)
+    email = compose_summary_email(pct, name_mapping)
+    send_email(email)
