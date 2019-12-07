@@ -6,6 +6,7 @@ I also took the opportunity to break out the email compose and email send functi
 ## File Overview
 | File | Description |
 |------|-------------|
+| bigquery_setup | Code used to do one time BigQuery setup (creating new dataset and table) |
 | main.py | Main code used to collect data and send email |
 | requirements.txt | Packages needed to run the code |
 | stocks.yaml | YAML file containing info on stocks to be checked |
