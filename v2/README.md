@@ -3,11 +3,14 @@ I decided I was interested in splitting out the stock information from the main 
 
 I also took the opportunity to break out the email compose and email send functionality thinking that I might eventually want to reuse the email send function for error reporting.
 
+I also added memory by writting results to Google BigQuery (see `bigquery_setup` for an overview of setting up the table first). This means that emails no longer send daily but only when the return values update. Note, in order for this to work, you need to add new environment variables: PROJECT_ID, DATASET, and TABLENAME.
+
 ## File Overview
 | File | Description |
 |------|-------------|
 | bigquery_setup | Code used to do one time BigQuery setup (creating new dataset and table) |
 | main.py | Main code used to collect data and send email |
+| query_monthly_data.sql | Query to pull latest returns by ETF from BiqQuery table. |
 | requirements.txt | Packages needed to run the code |
 | stocks.yaml | YAML file containing info on stocks to be checked |
 

@@ -6,6 +6,73 @@ from mailjet_rest import Client
 import os
 import pandas as pd
 import yaml
+from google.cloud import bigquery
+import datetime
+
+
+def get_bq_data():
+    """Queries BQ for the most recent entry for each ETF
+    Returns:
+        df: The most recent recorded returns for each ETF
+    """
+    project_id = os.environ['PROJECT_ID']
+    dataset = os.environ['DATASET']
+    tablename = os.environ['TABLENAME']
+    with open('query_monthly_data.sql') as f:
+        query = f.read()
+    query = query.format('`'+project_id+'.'+dataset+'.'+tablename+'`')
+    client = bigquery.Client()
+    return client.query(query).result().to_dataframe()
+
+
+def prep_data(stocks_df):
+    """Takes in a df and formats in to be written to BQ
+    Args:
+        stocks_df(df): the current data
+    Returns:
+        df: df properly formatted to be written to BQ
+    """
+    # add timestamp
+    current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    stocks_df['current_time'] = current_time
+    # change column order
+    cols = ['etf', 'current_time', 'return']
+    stocks_df = stocks_df[cols]
+    return stocks_df
+
+
+def write_to_gbq(stocks_df):
+    """Takes in a dataframe and writes the values to BQ
+    Args:
+        stocks_df(df): the dataframe to be written
+    """
+    dataset = os.environ['DATASET']
+    tablename = os.environ['TABLENAME']
+    # set up connection details
+    client = bigquery.Client()
+    dataset_ref = client.dataset(dataset)
+    table_ref = bigquery.TableReference(dataset_ref, tablename)
+    table = client.get_table(table_ref)
+    # convert to list of lists
+    rows_to_insert = stocks_df.values.tolist()
+    # write data
+    errors = client.insert_rows(table, rows_to_insert)
+    assert errors == []
+
+
+def stock_change(pct_df):
+    """Takes in a the most recent data, pulls in the most recent data in BQ,
+       and sees if they're the same.
+    Args:
+        pct_df(df): the current data
+    Returns:
+        bool: True if the current data is equal to the most recent data. Otherwise False.
+    """
+    df_hist = get_bq_data()
+    overlap = df_hist.etf.isin(pct_df.etf.to_list())
+    right = pct_df.set_index('etf').sort_index()
+    left = df_hist.loc[overlap].set_index('etf').sort_index()
+    return left.equals(right)
 
 
 def get_url(ticker):
@@ -100,5 +167,9 @@ def kickoff(request):
     pct = {}
     for ticker in tickers:
         pct[ticker] = get_yearly_return(ticker)
-    email = compose_summary_email(pct, name_mapping)
-    send_email(email)
+    pct_df = pd.DataFrame(list(pct.items()), columns=['etf', 'return'])
+    if not stock_change(pct_df):
+        email = compose_summary_email(pct, name_mapping)
+        send_email(email)
+    pct_df = prep_data(pct_df)
+    write_to_gbq(pct_df)
