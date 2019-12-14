@@ -1,4 +1,4 @@
-"""Code used to track 1-year total returns to help enable a hot potato index.
+"""Code used to track 1-year total returns to help enable a hot potato strategy.
 """
 import urllib.request as urllib2
 import json
