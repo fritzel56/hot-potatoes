@@ -102,12 +102,44 @@ def get_yearly_return(ticker):
     return jsonList['oneYear']['raw']
 
 
+def error_composition(e):
+    """Composes an email in the event of an exception with exception details.
+    Args:
+        e(Exception): the exception which was raised
+    Returns:
+        dict: data structure containing the composed email ready for MJ's API
+    """
+    contact_email = os.environ['contact_email']
+    contact_name = os.environ['contact_name']
+    data = {
+      'Messages': [
+        {
+          "From": {
+            "Email": contact_email,
+            "Name": contact_name
+          },
+          "To": [
+            {
+              "Email": contact_email,
+              "Name": contact_name
+            }
+          ],
+          "Subject": "There was an error with the hot potatoes run",
+          "HTMLPart": "There was an error with the hot potatoes run: {}".format(' '.join(e.args)),
+        }
+      ]
+    }
+    return data
+
+
 def compose_summary_email(pct, name_mapping):
     """Composes an email whose subject lists the highest performing stock
        and which includes a table showing all stock performance.
     Args:
         pct(dict): maps between stock tickers and 1-year total returns
         name_mapping(dict): maps between stock tickers and their definitions
+    Returns:
+        dict: data structure containing the composed email ready for MJ's API
     """
     pct_nice_name = {}
     for key in pct.keys():
@@ -165,11 +197,15 @@ def kickoff(request):
     # dictionary connecting tickers to readible names. Used in email.
     name_mapping = data['mapping']
     pct = {}
-    for ticker in tickers:
-        pct[ticker] = get_yearly_return(ticker)
-    pct_df = pd.DataFrame(list(pct.items()), columns=['etf', 'return'])
-    if not stock_change(pct_df):
-        email = compose_summary_email(pct, name_mapping)
+    try:
+        for ticker in tickers:
+            pct[ticker] = get_yearly_return(ticker)
+        pct_df = pd.DataFrame(list(pct.items()), columns=['etf', 'return'])
+        if not stock_change(pct_df):
+            email = compose_summary_email(pct, name_mapping)
+            send_email(email)
+        pct_df = prep_data(pct_df)
+        write_to_gbq(pct_df)
+    except Exception as e:
+        email = error_composition(e)
         send_email(email)
-    pct_df = prep_data(pct_df)
-    write_to_gbq(pct_df)
