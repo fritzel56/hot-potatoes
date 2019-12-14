@@ -44,4 +44,20 @@ def get_daily_data(ticker):
     cols = df.columns.drop('Date')
     df[cols] = df[cols].apply(pd.to_numeric)
     df['Date2'] = pd.to_datetime(df.Date,infer_datetime_format=True)
+    df['Ticker'] = ticker
     return df
+
+
+def get_bq_data():
+    """Queries BQ for the most recent entry for each ETF
+    Returns:
+        df: The most recent recorded returns for each ETF
+    """
+    project_id = os.environ['PROJECT_ID']
+    dataset = os.environ['DATASET']
+    tablename = os.environ['TABLENAME']
+    with open('query_monthly_data.sql') as f:
+        query = f.read()
+    query = query.format('`'+project_id+'.'+dataset+'.'+tablename+'`')
+    client = bigquery.Client()
+    return client.query(query).result().to_dataframe()
