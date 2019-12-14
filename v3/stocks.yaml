@@ -1,0 +1,7 @@
+tickers: ['VCN.TO', 'VLB.TO', 'VFV.TO', 'VIU.TO']
+
+mapping:
+    VCN: Canada Stocks
+    VLB: Canada Bonds
+    VFV: S&P 500 Index
+    VIU: Developed World Stocks
