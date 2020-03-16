@@ -1,3 +1,4 @@
 mailjet_rest
 pandas
 google-cloud-bigquery
+lxml
