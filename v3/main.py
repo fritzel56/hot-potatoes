@@ -1,14 +1,14 @@
 """Code used to track 1-year total returns to help enable a hot potato strategy.
 """
-import urllib.request as urllib2
-import sys
-from mailjet_rest import Client
 import os
+import sys
+import traceback
+import datetime as dt
+import urllib.request as urllib2
 import pandas as pd
 import yaml
 from google.cloud import bigquery
-import datetime as dt
-import traceback
+from mailjet_rest import Client
 
 
 def new_period_url(ticker, min_dt):
@@ -58,12 +58,12 @@ def data_return(url, ticker):
     end = content.find("</table", starting)
     table = content[starting:end]
     dfs = pd.read_html(table)
-    df = dfs[0]
+    df_data = dfs[0]
     # seperate out any dividend and split data
-    dividend_rows = df.Open.str.contains('Dividend')
-    split_rows = df.Open.str.contains('Split')
+    dividend_rows = df_data.Open.str.contains('Dividend')
+    split_rows = df_data.Open.str.contains('Split')
     assert (len(split_rows) == 0), "There was a split in: "+ticker
-    df_price = df.loc[(~dividend_rows) & (~split_rows)]
+    df_price = df_data.loc[(~dividend_rows) & (~split_rows)]
     # get rid of the notes at the end
     df_price = df_price[0:len(df_price)-1]
     # get the numeric columns
@@ -77,7 +77,7 @@ def data_return(url, ticker):
     # add ticker column to dataframe
     df_price.insert(0, 'Ticker', ticker)
     # format the dividend data
-    df_div = df.loc[dividend_rows]
+    df_div = df_data.loc[dividend_rows]
     if len(df_div) > 0:
         # split out divident data from text string and format columns
         df_div['div'] = df_div.Open.apply(lambda x: x.split(' ')[0])
@@ -118,7 +118,7 @@ def write_to_gbq(data, client, table):
     assert errors == [], 'There were errors writing to '+table+'. see:'+errors
 
 
-def error_composition(e):
+def error_composition():
     """Composes an email in the event of an exception with exception details.
 
     Args:
@@ -132,22 +132,22 @@ def error_composition(e):
     err = sys.exc_info()
     err_message = traceback.format_exception(*err)
     data = {
-      'Messages': [
-        {
-          "From": {
-            "Email": contact_email,
-            "Name": contact_name
-          },
-          "To": [
+        'Messages': [
             {
-              "Email": contact_email,
-              "Name": contact_name
+                "From": {
+                    "Email": contact_email,
+                    "Name": contact_name
+                },
+                "To": [
+                    {
+                        "Email": contact_email,
+                        "Name": contact_name
+                    }
+                ],
+                "Subject": "There was an error with the hot potatoes run",
+                "HTMLPart": "There was an error with the hot potatoes run: {} ".format(err_message),
             }
-          ],
-          "Subject": "There was an error with the hot potatoes run",
-          "HTMLPart": "There was an error with the hot potatoes run: {} ".format(err_message),
-        }
-      ]
+        ]
     }
     return data
 
@@ -178,22 +178,22 @@ def compose_summary_email(pct, name_mapping):
     contact_email = os.environ['contact_email']
     contact_name = os.environ['contact_name']
     data = {
-      'Messages': [
-        {
-          "From": {
-            "Email": contact_email,
-            "Name": contact_name
-          },
-          "To": [
+        'Messages': [
             {
-              "Email": contact_email,
-              "Name": contact_name
+                "From": {
+                    "Email": contact_email,
+                    "Name": contact_name
+                },
+                "To": [
+                    {
+                        "Email": contact_email,
+                        "Name": contact_name
+                    }
+                ],
+                "Subject": "{} has the highest returns".format(highest_return_ticker),
+                "HTMLPart": "<h3>Today's leader is {} at {}.</h3><br />Summary:<br />{}".format(highest_return_ticker, highest_return.round(2), summary_table),
             }
-          ],
-          "Subject": "{} has the highest returns".format(highest_return_ticker),
-          "HTMLPart": "<h3>Today's leader is {} at {}.</h3><br />Summary:<br />{}".format(highest_return_ticker, highest_return.round(2), summary_table),
-        }
-      ]
+        ]
     }
     return data
 
@@ -208,6 +208,7 @@ def send_email(email):
     api_secret = os.environ['api_secret']
     mailjet = Client(auth=(api_key, api_secret), version='v3.1')
     result = mailjet.send.create(data=email)
+    print(result)
 
 
 def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
@@ -226,8 +227,8 @@ def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
     print(ticker)
     end_dt = new_max_dt.replace(day=1)
     start_dt = end_dt.replace(year=end_dt.year-1)
-    with open('max_date_where.sql') as f:
-        sql_base = f.read()
+    with open('max_date_where.sql') as sql_file:
+        sql_base = sql_file.read()
     sql = sql_base.format(query_path, "'"+end_dt.strftime('%Y-%m-%d')+"'",
                           "'"+ticker+"'")
     end_dt = get_bq_data(sql, client)
@@ -237,8 +238,8 @@ def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
     start_dt = get_bq_data(sql, client)
     start_dt = start_dt['max_dt'].iloc[0]
     # get the closing values on the start and end dates
-    with open('close_value.sql') as f:
-        sql_base = f.read()
+    with open('close_value.sql') as sql_file:
+        sql_base = sql_file.read()
     sql = sql_base.format(query_path, "'"+ticker+"'",
                           "'"+end_dt.strftime('%Y-%m-%d')+"'")
     end_close = get_bq_data(sql, client)
@@ -248,23 +249,23 @@ def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
     start_close = get_bq_data(sql, client)
     start_close = start_close['close'].iloc[0]
     # get total dividends paid out during the year
-    with open('divs.sql') as f:
-        sql_base = f.read()
+    with open('divs.sql') as sql_file:
+        sql_base = sql_file .read()
     sql = sql_base.format(div_query_path, "'"+ticker+"'",
                           "'"+start_dt.strftime('%Y-%m-%d')+"'",
                           "'"+end_dt.strftime('%Y-%m-%d')+"'")
     divs = get_bq_data(sql, client)
     divs = divs['TOT_AMT'].iloc[0]
     # calculate the return
-    ticker_return = (end_close / (start_close - divs) - 1) * 100
-    return ticker_return
+    total_return = (end_close / (start_close - divs) - 1) * 100
+    return total_return
 
 
 def main_kickoff():
     """Function which orchestrates the rest of the code
     """
-    with open('stocks.yaml') as f:
-        data = yaml.load(f, Loader=yaml.FullLoader)
+    with open('stocks.yaml') as yaml_file:
+        data = yaml.load(yaml_file, Loader=yaml.FullLoader)
     # tickers for which we want reports
     tickers = data['tickers']
     # dictionary connecting tickers to readible names. Used in email.
@@ -291,8 +292,8 @@ def main_kickoff():
     load_div_table = client.get_table(load_div_table_ref)
     load_div_query_path = '`'+project_id+'.'+dataset+'.'+load_div_table_name+'`'
     # get max date in database
-    with open('min_max_date.sql') as f:
-        min_max_sql = f.read()
+    with open('min_max_date.sql') as sql_file:
+        min_max_sql = sql_file.read()
     min_max_sql = min_max_sql.format(price_query_path)
     max_dt = get_bq_data(min_max_sql, client)
     base_dt = max_dt['min_max_dt'].iloc[0]
@@ -310,19 +311,19 @@ def main_kickoff():
         # if there is new data, write it to the load tables
         if len(price_data) > 0:
             write_to_gbq(price_data, client, load_price_table)
-            with open('merge_price.sql') as f:
-                sql = f.read()
+            with open('merge_price.sql') as sql_file:
+                sql = sql_file.read()
             sql = sql.format(price_query_path, load_price_query_path)
             empty = get_bq_data(sql, client)
         if len(div_data) > 0:
             write_to_gbq(div_data, client, load_div_table)
-            with open('merge_divs.sql') as f:
-                sql = f.read()
+            with open('merge_divs.sql') as sql_file:
+                sql = sql_file.read()
             sql = sql.format(div_query_path, load_div_query_path)
             empty = get_bq_data(sql, client)
     # get the new min max date
-    with open('min_max_date.sql') as f:
-        min_max_sql = f.read()
+    with open('min_max_date.sql') as sql_file:
+        min_max_sql = sql_file.read()
     min_max_sql = min_max_sql.format(price_query_path)
     max_dt2 = get_bq_data(min_max_sql, client)
     new_max_dt = max_dt2['min_max_dt'].iloc[0]
@@ -346,9 +347,9 @@ def kickoff(request):
     try:
         # try to run the main body of code
         main_kickoff()
-    except Exception as e:
+    except Exception:
         # if it fails. capture the exception and send out a summary email.
-        email = error_composition(e)
+        email = error_composition()
         send_email(email)
 
 
