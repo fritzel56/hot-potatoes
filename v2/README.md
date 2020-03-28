@@ -19,4 +19,4 @@ Google Cloud Function's Inline Editor option only allows for a `main.py` file an
 
 Of note, I was hoping this would also mean that code would be pulled at each run meaning that it would pick up any new changes committed to master since it was first deployed. This appears not to be the case. Once deployed, the code version associated with it is locked. This means that if you update your code and want it reflected at run time, you need to redeploy your Google Cloud Function. This is as simple as clicking `Edit` and then `Deploy` without actually changing any of the settings.
 
-To customize to track your stocks of interest, you should only have to edit the `stocks.yaml` file.
+To customize which stocks you track, you should only have to edit the `stocks.yaml` file.
