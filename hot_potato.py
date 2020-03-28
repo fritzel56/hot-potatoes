@@ -1,10 +1,10 @@
 """Code used to track 1-year total returns to help enable a hot potato strategy.
 """
-import urllib.request as urllib2
-import json
-from mailjet_rest import Client
 import os
+import json
+import urllib.request as urllib2
 import pandas as pd
+from mailjet_rest import Client
 
 def get_url(ticker):
     """Takes in a stock ticker and returns the relevant Yahoo Finance link.
@@ -15,7 +15,7 @@ def get_url(ticker):
     Returns:
         str: the Yahoo Finance URL of the supplied ticker
     """
-    url='https://finance.yahoo.com/quote/{}/performance?p={}'.format(ticker, ticker)
+    url = 'https://finance.yahoo.com/quote/{arg1}/performance?p={arg1}'.format(arg1=ticker)
     return url
 
 def get_yearly_return(ticker):
@@ -32,8 +32,8 @@ def get_yearly_return(ticker):
     starting = content.find('trailingReturns')+17
     end = content.find("}}", starting)+2
     tree = content[starting:end]
-    jsonList = json.loads(tree)
-    return jsonList['oneYear']['raw']
+    json_list = json.loads(tree)
+    return json_list['oneYear']['raw']
 
 def send_email(pct, name_mapping):
     """Sends an email whose subject lists the highest performing stock
@@ -59,24 +59,26 @@ def send_email(pct, name_mapping):
     contact_name = os.environ['contact_name']
     mailjet = Client(auth=(api_key, api_secret), version='v3.1')
     data = {
-      'Messages': [
-        {
-          "From": {
-            "Email": contact_email,
-            "Name": contact_name
-          },
-          "To": [
+        'Messages': [
             {
-              "Email": contact_email,
-              "Name": contact_name
+                "From": {
+                    "Email": contact_email,
+                    "Name": contact_name
+                },
+                "To": [
+                    {
+                        "Email": contact_email,
+                        "Name": contact_name
+                    }
+                ],
+                "Subject": "{} has the highest returns".format(highest_return_ticker),
+                "HTMLPart": "<h3>Today's leader is {} at {}.</h3><br />Summary:<br />{}".format(highest_return_ticker, highest_return, summary_table),
             }
-          ],
-          "Subject": "{} has the highest returns".format(highest_return_ticker),
-          "HTMLPart": "<h3>Today's leader is {} at {}.</h3><br />Summary:<br />{}".format(highest_return_ticker, highest_return, summary_table),
-        }
-      ]
+        ]
     }
     result = mailjet.send.create(data=data)
+    print(result)
+
 
 def kickoff(request):
     """Function which orchestrates the rest of the code.
