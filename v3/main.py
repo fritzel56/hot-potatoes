@@ -223,17 +223,17 @@ def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
     Returns:
         float: the 1 year total return
     """
-    # pull start and end dates for the calculation
+    print(ticker)
     end_dt = new_max_dt.replace(day=1)
     start_dt = end_dt.replace(year=end_dt.year-1)
     with open('max_date_where.sql') as f:
         sql_base = f.read()
     sql = sql_base.format(query_path, "'"+end_dt.strftime('%Y-%m-%d')+"'",
-                            "'"+ticker+"'")
+                          "'"+ticker+"'")
     end_dt = get_bq_data(sql, client)
     end_dt = end_dt['max_dt'].iloc[0]
     sql = sql_base.format(query_path, "'"+start_dt.strftime('%Y-%m-%d')+"'",
-                            "'"+ticker+"'")
+                          "'"+ticker+"'")
     start_dt = get_bq_data(sql, client)
     start_dt = start_dt['max_dt'].iloc[0]
     # get the closing values on the start and end dates
