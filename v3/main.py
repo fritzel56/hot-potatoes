@@ -210,6 +210,56 @@ def send_email(email):
     result = mailjet.send.create(data=email)
 
 
+def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
+    """Takes in a ticker and calculates the 1 year return
+
+    Args:
+        nex_max_dt (datetime): the min max date in the database
+        ticker (str): the ticker to pull data from
+        query_path (str): the table path to pull stock data from
+        client (google big query client): open client to use for querying
+        div_query_path (str): the table path to pull dividend data from
+
+    Returns:
+        float: the 1 year total return
+    """
+    # pull start and end dates for the calculation
+    end_dt = new_max_dt.replace(day=1)
+    start_dt = end_dt.replace(year=end_dt.year-1)
+    with open('max_date_where.sql') as f:
+        sql_base = f.read()
+    sql = sql_base.format(query_path, "'"+end_dt.strftime('%Y-%m-%d')+"'",
+                            "'"+ticker+"'")
+    end_dt = get_bq_data(sql, client)
+    end_dt = end_dt['max_dt'].iloc[0]
+    sql = sql_base.format(query_path, "'"+start_dt.strftime('%Y-%m-%d')+"'",
+                            "'"+ticker+"'")
+    start_dt = get_bq_data(sql, client)
+    start_dt = start_dt['max_dt'].iloc[0]
+    # get the closing values on the start and end dates
+    with open('close_value.sql') as f:
+        sql_base = f.read()
+    sql = sql_base.format(query_path, "'"+ticker+"'",
+                          "'"+end_dt.strftime('%Y-%m-%d')+"'")
+    end_close = get_bq_data(sql, client)
+    end_close = end_close['close'].iloc[0]
+    sql = sql_base.format(query_path, "'"+ticker+"'",
+                          "'"+start_dt.strftime('%Y-%m-%d')+"'")
+    start_close = get_bq_data(sql, client)
+    start_close = start_close['close'].iloc[0]
+    # get total dividends paid out during the year
+    with open('divs.sql') as f:
+        sql_base = f.read()
+    sql = sql_base.format(div_query_path, "'"+ticker+"'",
+                          "'"+start_dt.strftime('%Y-%m-%d')+"'",
+                          "'"+end_dt.strftime('%Y-%m-%d')+"'")
+    divs = get_bq_data(sql, client)
+    divs = divs['TOT_AMT'].iloc[0]
+    # calculate the return
+    ticker_return = (end_close / (start_close - divs) - 1) * 100
+    return ticker_return
+
+
 def main_kickoff():
     """Function which orchestrates the rest of the code
     """
@@ -284,56 +334,6 @@ def main_kickoff():
                                         client, div_query_path)
         email = compose_summary_email(pct, name_mapping)
         send_email(email)
-
-
-def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
-    """Takes in a ticker and calculates the 1 year return
-
-    Args:
-        nex_max_dt (datetime): the min max date in the database
-        ticker (str): the ticker to pull data from
-        query_path (str): the table path to pull stock data from
-        client (google big query client): open client to use for querying
-        div_query_path (str): the table path to pull dividend data from
-
-    Returns:
-        float: the 1 year total return
-    """
-    # pull start and end dates for the calculation
-    end_dt = new_max_dt.replace(day=1)
-    start_dt = end_dt.replace(year=end_dt.year-1)
-    with open('max_date_where.sql') as f:
-        sql_base = f.read()
-    sql = sql_base.format(query_path, "'"+end_dt.strftime('%Y-%m-%d')+"'",
-                            "'"+ticker+"'")
-    end_dt = get_bq_data(sql, client)
-    end_dt = end_dt['max_dt'].iloc[0]
-    sql = sql_base.format(query_path, "'"+start_dt.strftime('%Y-%m-%d')+"'",
-                            "'"+ticker+"'")
-    start_dt = get_bq_data(sql, client)
-    start_dt = start_dt['max_dt'].iloc[0]
-    # get the closing values on the start and end dates
-    with open('close_value.sql') as f:
-        sql_base = f.read()
-    sql = sql_base.format(query_path, "'"+ticker+"'",
-                          "'"+end_dt.strftime('%Y-%m-%d')+"'")
-    end_close = get_bq_data(sql, client)
-    end_close = end_close['close'].iloc[0]
-    sql = sql_base.format(query_path, "'"+ticker+"'",
-                          "'"+start_dt.strftime('%Y-%m-%d')+"'")
-    start_close = get_bq_data(sql, client)
-    start_close = start_close['close'].iloc[0]
-    # get total dividends paid out during the year
-    with open('divs.sql') as f:
-        sql_base = f.read()
-    sql = sql_base.format(div_query_path, "'"+ticker+"'",
-                          "'"+start_dt.strftime('%Y-%m-%d')+"'",
-                          "'"+end_dt.strftime('%Y-%m-%d')+"'")
-    divs = get_bq_data(sql, client)
-    divs = divs['TOT_AMT'].iloc[0]
-    # calculate the return
-    ticker_return = (end_close / (start_close - divs) - 1) * 100
-    return ticker_return
 
 
 def kickoff(request):
