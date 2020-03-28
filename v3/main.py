@@ -13,8 +13,10 @@ import traceback
 
 def new_period_url(ticker, min_dt):
     """Takes in a stock ticker and returns the relevant Yahoo Finance link.
+
     Args:
-        ticker(str): the ticker whose info we want
+        ticker (str): the ticker whose info we want
+
     Returns:
         str: the Yahoo Finance URL of the supplied ticker
     """
@@ -26,8 +28,10 @@ def new_period_url(ticker, min_dt):
 
 def yahoo_date_calc(target_date):
     """Takes in a datetime date and converts it to Yahoo's date system
+
     Args:
-        target_date(dt): datetime date
+        target_date (dt): datetime date
+
     Returns:
         int: the date number in Yahoo's date system
     """
@@ -40,47 +44,59 @@ def yahoo_date_calc(target_date):
 
 def data_return(url, ticker):
     """Takes in a stock ticker and returns daily performance.
+
     Args:
-        ticker(str): the ticker whose info we want
+        url (str): the url from which to fetch the data
+        ticker (str): the ticker whose info we want
+
     Returns:
-        df: roughly the last 99 days of performance
+        tuple: two dfs. ~99 days of price data, ~99 days of dividend data
     """
+    # fetch the data from the URL
     content = urllib2.urlopen(url).read().decode('utf-8')
     starting = content.find('<table')
     end = content.find("</table", starting)
     table = content[starting:end]
     dfs = pd.read_html(table)
     df = dfs[0]
-    # get rid of any dividend info
+    # seperate out any dividend and split data
     dividend_rows = df.Open.str.contains('Dividend')
     split_rows = df.Open.str.contains('Split')
-    assert (len(split_rows)==0),"There was a split in: "+ticker
+    assert (len(split_rows) == 0), "There was a split in: "+ticker
     df_price = df.loc[(~dividend_rows) & (~split_rows)]
     # get rid of the notes at the end
     df_price = df_price[0:len(df_price)-1]
-    # make the columns numeric
+    # get the numeric columns
     cols = df_price.columns.drop(['Date', 'Close*'])
     # required field. want an error if it's missing
     df_price['Close*'] = df_price['Close*'].apply(pd.to_numeric)
-    # not required fields. accept NaNs if not present
+    # not required fields. convert to -9999 for database if missing
     df_price[cols] = df_price[cols].apply(pd.to_numeric, errors='coerce')
     df_price[cols] = df_price[cols].fillna(-9999)
     df_price['Date'] = pd.to_datetime(df_price.Date, infer_datetime_format=True)
+    # add ticker column to dataframe
     df_price.insert(0, 'Ticker', ticker)
     # format the dividend data
     df_div = df.loc[dividend_rows]
-    if len(df_div)>0:
+    if len(df_div) > 0:
+        # split out divident data from text string and format columns
         df_div['div'] = df_div.Open.apply(lambda x: x.split(' ')[0])
         df_div = df_div[['Date', 'div']]
         cols = df_div.columns.drop('Date')
         df_div[cols] = df_div[cols].apply(pd.to_numeric)
         df_div['Date'] = pd.to_datetime(df_div.Date, infer_datetime_format=True)
+        # add ticker column to dataframe
         df_div.insert(0, 'Ticker', ticker)
     return (df_price, df_div)
 
 
 def get_bq_data(sql, client):
     """Queries BQ for the most recent entry for each ETF
+
+    Args:
+        sql (str): the query to be run.
+        client (client): client to connect to BQ.
+
     Returns:
         df: The most recent recorded returns for each ETF
     """
@@ -89,20 +105,25 @@ def get_bq_data(sql, client):
 
 def write_to_gbq(data, client, table):
     """Takes in a dataframe and writes the values to BQ
+
     Args:
-        stocks_df(df): the dataframe to be written
+        data (df): the dataframe to be written
+        client (client): client to connect to BQ.
+        table (str): the table to be written to.
     """
     # convert to list of lists
     rows_to_insert = data.values.tolist()
     # write data
     errors = client.insert_rows(table, rows_to_insert)
-    assert errors == []
+    assert errors == [], 'There were errors writing to '+table+'. see:'+errors
 
 
 def error_composition(e):
     """Composes an email in the event of an exception with exception details.
+
     Args:
-        e(Exception): the exception which was raised
+        e (Exception): the exception which was raised
+
     Returns:
         dict: data structure containing the composed email ready for MJ's API
     """
@@ -134,9 +155,11 @@ def error_composition(e):
 def compose_summary_email(pct, name_mapping):
     """Composes an email whose subject lists the highest performing stock
        and which includes a table showing all stock performance.
+
     Args:
-        pct(dict): maps between stock tickers and 1-year total returns
-        name_mapping(dict): maps between stock tickers and their definitions
+        pct (dict): maps between stock tickers and 1-year total returns
+        name_mapping (dict): maps between stock tickers and their definitions
+
     Returns:
         dict: data structure containing the composed email ready for MJ's API
     """
@@ -177,8 +200,9 @@ def compose_summary_email(pct, name_mapping):
 
 def send_email(email):
     """Takes in a composed email and sends it using the mailjet api
+
     Args:
-        email(dict): dict containing all relevant fields needed by the mailjet API
+        email (dict): dict containing all relevant fields needed by the mailjet API
     """
     api_key = os.environ['api_key']
     api_secret = os.environ['api_secret']
@@ -188,8 +212,6 @@ def send_email(email):
 
 def main_kickoff():
     """Function which orchestrates the rest of the code
-    Args:
-        request: passed as part of the Google Function orchestration service. Not used.
     """
     with open('stocks.yaml') as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
@@ -266,12 +288,14 @@ def main_kickoff():
 
 def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
     """Takes in a ticker and calculates the 1 year return
+
     Args:
-        nex_max_dt(datetime): the min max date in the database
-        ticker(str): the ticker to pull data from
-        query_path(str): the table path to pull stock data from
-        client(google big query client): open client to use for querying
-        div_query_path(str): the table path to pull dividend data from
+        nex_max_dt (datetime): the min max date in the database
+        ticker (str): the ticker to pull data from
+        query_path (str): the table path to pull stock data from
+        client (google big query client): open client to use for querying
+        div_query_path (str): the table path to pull dividend data from
+
     Returns:
         float: the 1 year total return
     """
@@ -313,7 +337,11 @@ def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
 
 
 def kickoff(request):
-    """Used to kick off main code body inside a try/except structure
+    """Function which orchestrates the rest of the code
+
+    Args:
+        request: passed as part of the Google Function orchestration service.
+            Not used.
     """
     try:
         # try to run the main body of code
@@ -325,4 +353,4 @@ def kickoff(request):
 
 
 if __name__ == '__main__':
-    kickoff('start')s
+    kickoff('start')
