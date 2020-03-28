@@ -1,6 +1,6 @@
 # BigQuery Setup
 
-I originally thought it would be easy to determine which day Yahoo Finance would update (ex: first business day of the month) but it didn't seem so straightforward. Instead, I decided I could add memory to the system using Google BigQuery. This way I could check if today's price was different from yesterday's price. If it was, I would send the email. This would also allow me to see historical data if I wanted to look at it later.
+I originally thought it would be easy to determine which day Yahoo Finance would update (ex: first business day of the month) but it didn't seem so straightforward. Instead, I decided I could add memory to the system using Google BigQuery. This way I could check if today's total 1 year return was different from yesterday's total 1 year return. If it was, I would send the email. This would also allow me to see historical data if I wanted to look at it later.
 
 I chose BigQuery because it's included in the always free tier.
 
