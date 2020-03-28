@@ -47,4 +47,4 @@ To run `insert_seed_data.py`, you need to have the following environment variabl
 | PROJECT | Name of the Google Cloud project associated with the BigQuery datasets. |
 | DATASET | Name of the BigQuery dataset associated with your tables. |
 | PRICE_TABLENAME | Name of the table where the price data will be stored. |
-| DIVIDEND_TABLENAME | Name of the table where the dividend data is stored. |
+| DIVIDEND_TABLENAME | Name of the table where the dividend data will be stored. |
