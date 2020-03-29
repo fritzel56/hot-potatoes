@@ -1,13 +1,13 @@
 """Code used to track 1-year total returns to help enable a hot potato strategy.
 """
-import urllib.request as urllib2
-import json
-from mailjet_rest import Client
 import os
+import urllib.request as urllib2
+import datetime
+import json
 import pandas as pd
 import yaml
 from google.cloud import bigquery
-import datetime
+from mailjet_rest import Client
 
 
 def get_bq_data():
@@ -18,8 +18,8 @@ def get_bq_data():
     project_id = os.environ['PROJECT_ID']
     dataset = os.environ['DATASET']
     tablename = os.environ['TABLENAME']
-    with open('query_monthly_data.sql') as f:
-        query = f.read()
+    with open('query_monthly_data.sql') as sql_file:
+        query = sql_file.read()
     query = query.format('`'+project_id+'.'+dataset+'.'+tablename+'`')
     client = bigquery.Client()
     return client.query(query).result().to_dataframe()
@@ -82,7 +82,7 @@ def get_url(ticker):
     Returns:
         str: the Yahoo Finance URL of the supplied ticker
     """
-    url = 'https://finance.yahoo.com/quote/{}/performance?p={}'.format(ticker, ticker)
+    url = 'https://finance.yahoo.com/quote/{arg1}/performance?p={arg1}'.format(arg1=ticker)
     return url
 
 
@@ -98,11 +98,11 @@ def get_yearly_return(ticker):
     starting = content.find('trailingReturns')+17
     end = content.find("}}", starting)+2
     tree = content[starting:end]
-    jsonList = json.loads(tree)
-    return jsonList['oneYear']['raw']
+    json_list = json.loads(tree)
+    return json_list['oneYear']['raw']
 
 
-def error_composition(e):
+def error_composition(errs):
     """Composes an email in the event of an exception with exception details.
     Args:
         e(Exception): the exception which was raised
@@ -112,22 +112,22 @@ def error_composition(e):
     contact_email = os.environ['contact_email']
     contact_name = os.environ['contact_name']
     data = {
-      'Messages': [
-        {
-          "From": {
-            "Email": contact_email,
-            "Name": contact_name
-          },
-          "To": [
+        'Messages': [
             {
-              "Email": contact_email,
-              "Name": contact_name
+                "From": {
+                    "Email": contact_email,
+                    "Name": contact_name
+                },
+                "To": [
+                    {
+                        "Email": contact_email,
+                        "Name": contact_name
+                    }
+                ],
+                "Subject": "There was an error with the hot potatoes run",
+                "HTMLPart": "There was an error with the hot potatoes run: {}".format(' '.join(errs.args)),
             }
-          ],
-          "Subject": "There was an error with the hot potatoes run",
-          "HTMLPart": "There was an error with the hot potatoes run: {}".format(' '.join(e.args)),
-        }
-      ]
+        ]
     }
     return data
 
@@ -154,22 +154,22 @@ def compose_summary_email(pct, name_mapping):
     contact_email = os.environ['contact_email']
     contact_name = os.environ['contact_name']
     data = {
-      'Messages': [
-        {
-          "From": {
-            "Email": contact_email,
-            "Name": contact_name
-          },
-          "To": [
+        'Messages': [
             {
-              "Email": contact_email,
-              "Name": contact_name
+                "From": {
+                    "Email": contact_email,
+                    "Name": contact_name
+                },
+                "To": [
+                    {
+                        "Email": contact_email,
+                        "Name": contact_name
+                    }
+                ],
+                "Subject": "{} has the highest returns".format(highest_return_ticker),
+                "HTMLPart": "<h3>Today's leader is {} at {}.</h3><br />Summary:<br />{}".format(highest_return_ticker, highest_return, summary_table),
             }
-          ],
-          "Subject": "{} has the highest returns".format(highest_return_ticker),
-          "HTMLPart": "<h3>Today's leader is {} at {}.</h3><br />Summary:<br />{}".format(highest_return_ticker, highest_return, summary_table),
-        }
-      ]
+        ]
     }
     return data
 
@@ -183,6 +183,7 @@ def send_email(email):
     api_secret = os.environ['api_secret']
     mailjet = Client(auth=(api_key, api_secret), version='v3.1')
     result = mailjet.send.create(data=email)
+    print(result)
 
 
 def kickoff(request):
@@ -190,8 +191,8 @@ def kickoff(request):
     Args:
         request: passed as part of the Google Function orchestration service. Not used.
     """
-    with open('stocks.yaml') as f:
-        data = yaml.load(f, Loader=yaml.FullLoader)
+    with open('stocks.yaml') as yaml_file:
+        data = yaml.load(yaml_file, Loader=yaml.FullLoader)
     # tickers for which we want reports
     tickers = data['tickers']
     # dictionary connecting tickers to readible names. Used in email.
@@ -206,6 +207,6 @@ def kickoff(request):
             send_email(email)
         pct_df = prep_data(pct_df)
         write_to_gbq(pct_df)
-    except Exception as e:
-        email = error_composition(e)
+    except Exception as errs:
+        email = error_composition(errs)
         send_email(email)
