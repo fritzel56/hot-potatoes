@@ -109,7 +109,7 @@ def write_to_gbq(data, client, table):
     Args:
         data (df): the dataframe to be written
         client (client): client to connect to BQ.
-        table (str): the table to be written to.
+        table (GBQ Table): GBQ table reference for table to be written to.
     """
     # convert to list of lists
     rows_to_insert = data.values.tolist()
