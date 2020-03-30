@@ -62,7 +62,7 @@ def data_return(url, ticker):
     # seperate out any dividend and split data
     dividend_rows = df_data.Open.str.contains('Dividend')
     split_rows = df_data.Open.str.contains('Split')
-    assert (len(split_rows) == 0), "There was a split in: "+ticker
+    assert (sum(split_rows) == 0), "There was a split in: "+ticker
     df_price = df_data.loc[(~dividend_rows) & (~split_rows)]
     # get rid of the notes at the end
     df_price = df_price[0:len(df_price)-1]
