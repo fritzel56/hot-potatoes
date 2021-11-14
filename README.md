@@ -9,7 +9,7 @@ This work was inspired by [this article](https://www.theglobeandmail.com/investi
 **[Visual How To](#visual-how-to)**<br>
 
 ## Potato Portfolios
-The name is inspired by the idea of the couch potato portfolio. This is an investing approach widely discussed online which encourages in investing in index tracking ETFs and holding for the long term. By contrast, the hot potato approach suggested that we should take the same ETF basket (in this case suggested as Canadian stocks, Canadian bonds, US stocks, and internation stocks) and, each month, invest all money in the ETF which had the highest total return over the last 12 months.
+The name is inspired by the idea of the couch potato portfolio. This is an investing approach widely discussed online which encourages investing in index tracking ETFs and holding for the long term. By contrast, the hot potato approach suggests that we should take the same ETF basket (in this case suggested as Canadian stocks, Canadian bonds, US stocks, and internation stocks) and, each month, invest all money in the ETF which had the highest total return over the previous 12 months.
 ## File Overview
 | File | Description |
 |------|-------------|
