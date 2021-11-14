@@ -12,7 +12,7 @@ This work was inspired by [this article](https://www.theglobeandmail.com/investi
 The name is inspired by the idea of the couch potato portfolio. This is an investing approach widely discussed online which encourages investing in index tracking ETFs and holding for the long term. By contrast, the hot potato approach suggests that we should take the same ETF basket (in this case suggested as Canadian stocks, Canadian bonds, US stocks, and internation stocks) and, each month, invest all money in the ETF which had the highest total return over the previous 12 months.
 ## File Overview
 
-Update: At some point in 2021, Yahoo changed their website layout which broke my webscraper. Instead of fixing it, I decided to move to using yfinance which is a python package which pulls the data nicely for us. I've only update V3 to use yfinance so the other versions no longer work.
+Update: At some point in 2021, Yahoo changed their website layout which broke my webscraper. Instead of fixing it, I decided to move to using yfinance which is a python package which pulls the data nicely for us. I've only updated V3 to use yfinance so the other versions no longer work.
 
 | File | Description |
 |------|-------------|
