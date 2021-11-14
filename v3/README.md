@@ -2,6 +2,8 @@
 
 V2 ran well but you had to wait until mid-month which is when Yahoo updated their total 1 year return numbers. I wanted to be able to send something out on the first business day. This code does this. It also somewhat improves the error reporting.
 
+Update: At some point in 2021, Yahoo changed their website layout which broke my webscraper. Instead of fixing, I decided to move to using yfinance which is a python package which pulls the data nicely for us.
+
 Main cons to this approaoch:
 1) some manual work needed to do a one time load of historical data
 2) calculated 1 year total returns do not align exactly with Yahoo's values

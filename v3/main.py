@@ -9,84 +9,24 @@ import pandas as pd
 import yaml
 from google.cloud import bigquery
 from mailjet_rest import Client
+import yfinance as yf
 
 
-def new_period_url(ticker, min_dt):
-    """Takes in a stock ticker and returns the relevant Yahoo Finance link.
-
-    Args:
-        ticker (str): the ticker whose info we want
-
-    Returns:
-        str: the Yahoo Finance URL of the supplied ticker
-    """
-    start = yahoo_date_calc(min_dt)
-    end = yahoo_date_calc(dt.datetime.today())
-    url = 'https://finance.yahoo.com/quote/{}/history?period1={}&period2={}&interval=1d&filter=history&frequency=1d'.format(ticker, start, end)
-    return url
-
-
-def yahoo_date_calc(target_date):
-    """Takes in a datetime date and converts it to Yahoo's date system
-
-    Args:
-        target_date (dt): datetime date
-
-    Returns:
-        int: the date number in Yahoo's date system
-    """
-    nov_30_2018 = 1543554000
-    base_date = dt.datetime.strptime('2018-11-30', '%Y-%m-%d')
-    days = (target_date - base_date).days
-    y_date = nov_30_2018 + 86400 * days
-    return y_date
-
-
-def data_return(url, ticker):
-    """Takes in a stock ticker and returns daily performance.
-
-    Args:
-        url (str): the url from which to fetch the data
-        ticker (str): the ticker whose info we want
-
-    Returns:
-        tuple: two dfs. ~99 days of price data, ~99 days of dividend data
-    """
-    # fetch the data from the URL
-    content = urllib2.urlopen(url).read().decode('utf-8')
-    starting = content.find('<table')
-    end = content.find("</table", starting)
-    table = content[starting:end]
-    dfs = pd.read_html(table)
-    df_data = dfs[0]
-    # seperate out any dividend and split data
-    dividend_rows = df_data.Open.str.contains('Dividend')
-    split_rows = df_data.Open.str.contains('Split')
-    assert (sum(split_rows) == 0), "There was a split in: "+ticker
-    df_price = df_data.loc[(~dividend_rows) & (~split_rows)]
-    # get rid of the notes at the end
-    df_price = df_price[0:len(df_price)-1]
-    # get the numeric columns
-    cols = df_price.columns.drop(['Date', 'Close*'])
-    # required field. want an error if it's missing
-    df_price['Close*'] = df_price['Close*'].apply(pd.to_numeric)
-    # not required fields. convert to -9999 for database if missing
-    df_price[cols] = df_price[cols].apply(pd.to_numeric, errors='coerce')
-    df_price[cols] = df_price[cols].fillna(-9999)
-    df_price['Date'] = pd.to_datetime(df_price.Date, infer_datetime_format=True)
-    # add ticker column to dataframe
+def get_hist_data(start_dt, ticker):
+    start_dt = start_dt.strftime('%Y-%m-%d')
+    stock_data = yf.download(ticker, start=start_dt, actions=True)
+    stock_data = stock_data.loc[stock_data.index >= start_dt]
+    stock_data.reset_index(inplace=True)
+    df_price_cols = ['Date', 'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']
+    df_price = stock_data[df_price_cols].copy()
     df_price.insert(0, 'Ticker', ticker)
-    # format the dividend data
-    df_div = df_data.loc[dividend_rows]
-    if len(df_div) > 0:
-        # split out divident data from text string and format columns
-        df_div['div'] = df_div.Open.apply(lambda x: x.split(' ')[0])
-        df_div = df_div[['Date', 'div']]
-        cols = df_div.columns.drop('Date')
-        df_div[cols] = df_div[cols].apply(pd.to_numeric)
-        df_div['Date'] = pd.to_datetime(df_div.Date, infer_datetime_format=True)
-        # add ticker column to dataframe
-        df_div.insert(0, 'Ticker', ticker)
+    price_float_cols = df_price.columns.drop(['Ticker', 'Date', 'Volume'])
+    for col in price_float_cols:
+        df_price.loc[:, col] = df_price.loc[:, col].apply(lambda x: round(x, 2))
+    df_div_cols = ['Date', 'Dividends']
+    df_div = stock_data.loc[stock_data.Dividends > 0, df_div_cols].copy()
+    df_div.insert(0, 'Ticker', ticker)
+    df_div.loc[:, 'Dividends'] = df_div.loc[:, 'Dividends'].apply(lambda x: round(x, 2))
     return (df_price, df_div)
 
 
@@ -109,7 +49,7 @@ def write_to_gbq(data, client, table):
     Args:
         data (df): the dataframe to be written
         client (client): client to connect to BQ.
-        table (GBQ Table): GBQ table reference for table to be written to.
+        table (str): the table to be written to.
     """
     # convert to list of lists
     rows_to_insert = data.values.tolist()
@@ -131,6 +71,8 @@ def error_composition():
     contact_name = os.environ['contact_name']
     err = sys.exc_info()
     err_message = traceback.format_exception(*err)
+    err_str = '<br>'.join(err_message)
+    err_str = err_str.replace('\n', '')
     data = {
         'Messages': [
             {
@@ -144,8 +86,8 @@ def error_composition():
                         "Name": contact_name
                     }
                 ],
-                "Subject": "There was an error with the hot potatoes run",
-                "HTMLPart": "There was an error with the hot potatoes run: {} ".format(err_message),
+                "Subject": "There was an error with the hot potatoes run V3",
+                "HTMLPart": "There was an error with the hot potatoes run: <br> {} ".format(err_str),
             }
         ]
     }
@@ -298,35 +240,43 @@ def main_kickoff():
     max_dt = get_bq_data(min_max_sql, client)
     base_dt = max_dt['min_max_dt'].iloc[0]
     # if only have a one date range, return is weird so look at min 7 day range
-    pull_dt = base_dt - dt.timedelta(days=14)
+    pull_dt = base_dt - dt.timedelta(days=7)
+    print(pull_dt)
+    print(base_dt)
+    start_dt = pull_dt.strftime('%Y-%m-%d')
+
     # empty load tables
     sql = "delete FROM "+load_price_query_path+" where snap_date > '2000-01-01'"
-    empty = get_bq_data(sql, client)
+    _ = get_bq_data(sql, client)
     sql = "delete FROM "+load_div_query_path+" where snap_date > '2000-01-01'"
-    empty = get_bq_data(sql, client)
+    _ = get_bq_data(sql, client)
     # pull data for each ticker from Yahoo
     for ticker in tickers:
-        url = new_period_url(ticker, pull_dt)
-        (price_data, div_data) = data_return(url, ticker)
+        print('start')
+        print(ticker)
+        (price_data, div_data) = get_hist_data(pull_dt, ticker)
         # if there is new data, write it to the load tables
         if len(price_data) > 0:
             write_to_gbq(price_data, client, load_price_table)
             with open('merge_price.sql') as sql_file:
                 sql = sql_file.read()
             sql = sql.format(price_query_path, load_price_query_path)
-            empty = get_bq_data(sql, client)
+            _ = get_bq_data(sql, client)
         if len(div_data) > 0:
             write_to_gbq(div_data, client, load_div_table)
             with open('merge_divs.sql') as sql_file:
                 sql = sql_file.read()
             sql = sql.format(div_query_path, load_div_query_path)
-            empty = get_bq_data(sql, client)
+            _ = get_bq_data(sql, client)
     # get the new min max date
     with open('min_max_date.sql') as sql_file:
         min_max_sql = sql_file.read()
     min_max_sql = min_max_sql.format(price_query_path)
     max_dt2 = get_bq_data(min_max_sql, client)
     new_max_dt = max_dt2['min_max_dt'].iloc[0]
+    print(new_max_dt)
+    print('end')
+
     # check if we're in a new month. if yes, calculate + email returns
     if new_max_dt.month != base_dt.month:
         pct = {}

@@ -2,3 +2,6 @@ mailjet_rest
 pandas
 google-cloud-bigquery
 lxml
+yfinance
+pyarrow
+pyyaml

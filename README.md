@@ -11,14 +11,17 @@ This work was inspired by [this article](https://www.theglobeandmail.com/investi
 ## Potato Portfolios
 The name is inspired by the idea of the couch potato portfolio. This is an investing approach widely discussed online which encourages investing in index tracking ETFs and holding for the long term. By contrast, the hot potato approach suggests that we should take the same ETF basket (in this case suggested as Canadian stocks, Canadian bonds, US stocks, and internation stocks) and, each month, invest all money in the ETF which had the highest total return over the previous 12 months.
 ## File Overview
+
+Update: At some point in 2021, Yahoo changed their website layout which broke my webscraper. Instead of fixing it, I decided to move to using yfinance which is a python package which pulls the data nicely for us. I've only update V3 to use yfinance so the other versions no longer work.
+
 | File | Description |
 |------|-------------|
 | images | Folder containing images for this document |
 | return_investigation | Folder containing resources used to confirm that I understood what 1-year Monthly total return was |
-| hot_potato.py | Main code used to collect data and send email |
+| hot_potato.py | Main code used to collect data and send email. **No Longer Runs** |
 | requirements.txt | Packages needed to run the code |
-| v2 | Updated code structure to use multiple files with Cloud Source repository. Also started using BigQuery to store historical results. As a result, emails no longer send daily: now they only send when the returns change. Adds some basic exception handling to send emails in the event of a failure. |
-| v3 | Calculates one year return using historical data. Pro is that you don't have to wait till mid-month for Yahoo to update its calculated one year returns. Cons are that you have to load historical data (one off setup) and that the calculations aren't exactly accurate. Improved error emails. |
+| v2 | Updated code structure to use multiple files with Cloud Source repository. Also started using BigQuery to store historical results. As a result, emails no longer send daily: now they only send when the returns change. Adds some basic exception handling to send emails in the event of a failure. **No Longer Runs** |
+| v3 | Calculates one year return using historical data. Pro is that you don't have to wait till mid-month for Yahoo to update its calculated one year returns. Cons are that you have to load historical data (one off setup) and that the calculations aren't exactly accurate. Improved error emails. **Still Runs** |
 
 ## Problem Statement
 The idea of the hot potato portfolio seemed interesting but I thought there was a decent chance that I might forget to collect the needed info at the end of every month. The purpose of this code is to collect 1-year total returns from Yahoo Finance using python.
