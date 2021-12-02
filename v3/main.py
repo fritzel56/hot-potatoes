@@ -155,7 +155,6 @@ def main_kickoff():
     pull_dt = base_dt - dt.timedelta(days=7)
     logging.info(pull_dt)
     logging.info(base_dt)
-    start_dt = pull_dt.strftime('%Y-%m-%d')
 
     # empty load tables
     sql = "delete FROM "+load_price_query_path+" where snap_date > '2000-01-01'"
