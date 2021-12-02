@@ -11,6 +11,7 @@ from google.cloud import bigquery
 from mailjet_rest import Client
 import yfinance as yf
 import logging
+import email_helpers as eh
 
 
 # set logging level
@@ -63,42 +64,6 @@ def write_to_gbq(data, client, table):
     assert errors == [], 'There were errors writing to '+table+'. see:'+errors
 
 
-def error_composition():
-    """Composes an email in the event of an exception with exception details.
-
-    Args:
-        e (Exception): the exception which was raised
-
-    Returns:
-        dict: data structure containing the composed email ready for MJ's API
-    """
-    contact_email = os.environ['contact_email']
-    contact_name = os.environ['contact_name']
-    err = sys.exc_info()
-    err_message = traceback.format_exception(*err)
-    err_str = '<br>'.join(err_message)
-    err_str = err_str.replace('\n', '')
-    data = {
-        'Messages': [
-            {
-                "From": {
-                    "Email": contact_email,
-                    "Name": contact_name
-                },
-                "To": [
-                    {
-                        "Email": contact_email,
-                        "Name": contact_name
-                    }
-                ],
-                "Subject": "There was an error with the hot potatoes run V3",
-                "HTMLPart": "There was an error with the hot potatoes run: <br> {} ".format(err_str),
-            }
-        ]
-    }
-    return data
-
-
 def compose_summary_email(pct, name_mapping):
     """Composes an email whose subject lists the highest performing stock
        and which includes a table showing all stock performance.
@@ -122,40 +87,9 @@ def compose_summary_email(pct, name_mapping):
                                       left_index=True, right_index=True)
     df_tot = df_tot.sort_values(by='YTD', ascending=False).transpose()
     summary_table = df_tot.to_html()
-    contact_email = os.environ['contact_email']
-    contact_name = os.environ['contact_name']
-    data = {
-        'Messages': [
-            {
-                "From": {
-                    "Email": contact_email,
-                    "Name": contact_name
-                },
-                "To": [
-                    {
-                        "Email": contact_email,
-                        "Name": contact_name
-                    }
-                ],
-                "Subject": "{} has the highest returns".format(highest_return_ticker),
-                "HTMLPart": "<h3>Today's leader is {} at {}.</h3><br />Summary:<br />{}".format(highest_return_ticker, highest_return.round(2), summary_table),
-            }
-        ]
-    }
-    return data
-
-
-def send_email(email):
-    """Takes in a composed email and sends it using the mailjet api
-
-    Args:
-        email (dict): dict containing all relevant fields needed by the mailjet API
-    """
-    api_key = os.environ['api_key']
-    api_secret = os.environ['api_secret']
-    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
-    result = mailjet.send.create(data=email)
-    logging.info(result)
+    subject = "{} has the highest returns".format(highest_return_ticker)
+    body = "<h3>Today's leader is {} at {}.</h3><br />Summary:<br />{}".format(highest_return_ticker, highest_return.round(2), summary_table)
+    return subject, body
 
 
 def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
@@ -288,8 +222,24 @@ def main_kickoff():
         for ticker in tickers:
             pct[ticker] = ticker_return(new_max_dt, ticker, price_query_path,
                                         client, div_query_path)
-        email = compose_summary_email(pct, name_mapping)
-        send_email(email)
+        subject, body = compose_summary_email(pct, name_mapping)
+        email = eh.email_composition(os.environ['contact_email'],
+                                     os.environ['contact_name'],
+                                     subject, body)
+        eh.send_email(email)
+
+
+def error_email_body():
+    """Composes the body of the email in the event of an error with a run.
+    Returns:
+        str: The errors which caused the job to fail.
+    """
+    err = sys.exc_info()
+    err_message = traceback.format_exception(*err)
+    err_str = '<br>'.join(err_message)
+    err_str = err_str.replace('\n', '')
+    body = "There was an errorThere was an error with the hot potatoes run: <br> {}".format(err_str)
+    return body
 
 
 def kickoff(request):
@@ -304,8 +254,12 @@ def kickoff(request):
         main_kickoff()
     except Exception:
         # if it fails. capture the exception and send out a summary email.
-        email = error_composition()
-        send_email(email)
+        subject = "There was an error with the hot potatoes run V3"
+        body = error_email_body()
+        email = eh.email_composition(os.environ['contact_email'],
+                                     os.environ['contact_name'],
+                                     subject, body)
+        eh.send_email(email)
 
 
 if __name__ == '__main__':
