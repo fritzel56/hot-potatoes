@@ -12,6 +12,7 @@ from mailjet_rest import Client
 import yfinance as yf
 import logging
 import email_helpers as eh
+import google_helpers as gh
 
 
 # set logging level
@@ -34,34 +35,6 @@ def get_hist_data(start_dt, ticker):
     df_div.insert(0, 'Ticker', ticker)
     df_div.loc[:, 'Dividends'] = df_div.loc[:, 'Dividends'].apply(lambda x: round(x, 2))
     return (df_price, df_div)
-
-
-def get_bq_data(sql, client):
-    """Queries BQ for the most recent entry for each ETF
-
-    Args:
-        sql (str): the query to be run.
-        client (client): client to connect to BQ.
-
-    Returns:
-        df: The most recent recorded returns for each ETF
-    """
-    return client.query(sql).result().to_dataframe()
-
-
-def write_to_gbq(data, client, table):
-    """Takes in a dataframe and writes the values to BQ
-
-    Args:
-        data (df): the dataframe to be written
-        client (client): client to connect to BQ.
-        table (str): the table to be written to.
-    """
-    # convert to list of lists
-    rows_to_insert = data.values.tolist()
-    # write data
-    errors = client.insert_rows(table, rows_to_insert)
-    assert errors == [], 'There were errors writing to '+table+'. see:'+errors
 
 
 def compose_summary_email(pct, name_mapping):
@@ -112,22 +85,22 @@ def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
         sql_base = sql_file.read()
     sql = sql_base.format(query_path, "'"+end_dt.strftime('%Y-%m-%d')+"'",
                           "'"+ticker+"'")
-    end_dt = get_bq_data(sql, client)
+    end_dt = gh.get_bq_data(sql, client)
     end_dt = end_dt['max_dt'].iloc[0]
     sql = sql_base.format(query_path, "'"+start_dt.strftime('%Y-%m-%d')+"'",
                           "'"+ticker+"'")
-    start_dt = get_bq_data(sql, client)
+    start_dt = gh.get_bq_data(sql, client)
     start_dt = start_dt['max_dt'].iloc[0]
     # get the closing values on the start and end dates
     with open('close_value.sql') as sql_file:
         sql_base = sql_file.read()
     sql = sql_base.format(query_path, "'"+ticker+"'",
                           "'"+end_dt.strftime('%Y-%m-%d')+"'")
-    end_close = get_bq_data(sql, client)
+    end_close = gh.get_bq_data(sql, client)
     end_close = end_close['close'].iloc[0]
     sql = sql_base.format(query_path, "'"+ticker+"'",
                           "'"+start_dt.strftime('%Y-%m-%d')+"'")
-    start_close = get_bq_data(sql, client)
+    start_close = gh.get_bq_data(sql, client)
     start_close = start_close['close'].iloc[0]
     # get total dividends paid out during the year
     with open('divs.sql') as sql_file:
@@ -135,7 +108,7 @@ def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
     sql = sql_base.format(div_query_path, "'"+ticker+"'",
                           "'"+start_dt.strftime('%Y-%m-%d')+"'",
                           "'"+end_dt.strftime('%Y-%m-%d')+"'")
-    divs = get_bq_data(sql, client)
+    divs = gh.get_bq_data(sql, client)
     divs = divs['TOT_AMT'].iloc[0]
     # calculate the return
     total_return = (end_close / (start_close - divs) - 1) * 100
@@ -176,7 +149,7 @@ def main_kickoff():
     with open('min_max_date.sql') as sql_file:
         min_max_sql = sql_file.read()
     min_max_sql = min_max_sql.format(price_query_path)
-    max_dt = get_bq_data(min_max_sql, client)
+    max_dt = gh.get_bq_data(min_max_sql, client)
     base_dt = max_dt['min_max_dt'].iloc[0]
     # if only have a one date range, return is weird so look at min 7 day range
     pull_dt = base_dt - dt.timedelta(days=7)
@@ -186,9 +159,9 @@ def main_kickoff():
 
     # empty load tables
     sql = "delete FROM "+load_price_query_path+" where snap_date > '2000-01-01'"
-    _ = get_bq_data(sql, client)
+    _ = gh.get_bq_data(sql, client)
     sql = "delete FROM "+load_div_query_path+" where snap_date > '2000-01-01'"
-    _ = get_bq_data(sql, client)
+    _ = gh.get_bq_data(sql, client)
     # pull data for each ticker from Yahoo
     for ticker in tickers:
         logging.info('start')
@@ -196,22 +169,22 @@ def main_kickoff():
         (price_data, div_data) = get_hist_data(pull_dt, ticker)
         # if there is new data, write it to the load tables
         if len(price_data) > 0:
-            write_to_gbq(price_data, client, load_price_table)
+            gh.write_to_gbq(price_data, client, load_price_table)
             with open('merge_price.sql') as sql_file:
                 sql = sql_file.read()
             sql = sql.format(price_query_path, load_price_query_path)
-            _ = get_bq_data(sql, client)
+            _ = gh.get_bq_data(sql, client)
         if len(div_data) > 0:
-            write_to_gbq(div_data, client, load_div_table)
+            gh.write_to_gbq(div_data, client, load_div_table)
             with open('merge_divs.sql') as sql_file:
                 sql = sql_file.read()
             sql = sql.format(div_query_path, load_div_query_path)
-            _ = get_bq_data(sql, client)
+            _ = gh.get_bq_data(sql, client)
     # get the new min max date
     with open('min_max_date.sql') as sql_file:
         min_max_sql = sql_file.read()
     min_max_sql = min_max_sql.format(price_query_path)
-    max_dt2 = get_bq_data(min_max_sql, client)
+    max_dt2 = gh.get_bq_data(min_max_sql, client)
     new_max_dt = max_dt2['min_max_dt'].iloc[0]
     logging.info(new_max_dt)
     logging.info('end')
