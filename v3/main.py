@@ -10,6 +10,11 @@ import yaml
 from google.cloud import bigquery
 from mailjet_rest import Client
 import yfinance as yf
+import logging
+
+
+# set logging level
+logging.basicConfig(level=logging.INFO)
 
 
 def get_hist_data(start_dt, ticker):
@@ -150,7 +155,7 @@ def send_email(email):
     api_secret = os.environ['api_secret']
     mailjet = Client(auth=(api_key, api_secret), version='v3.1')
     result = mailjet.send.create(data=email)
-    print(result)
+    logging.info(result)
 
 
 def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
@@ -166,7 +171,7 @@ def ticker_return(new_max_dt, ticker, query_path, client, div_query_path):
     Returns:
         float: the 1 year total return
     """
-    print(ticker)
+    logging.info(ticker)
     end_dt = new_max_dt.replace(day=1)
     start_dt = end_dt.replace(year=end_dt.year-1)
     with open('max_date_where.sql') as sql_file:
@@ -241,8 +246,8 @@ def main_kickoff():
     base_dt = max_dt['min_max_dt'].iloc[0]
     # if only have a one date range, return is weird so look at min 7 day range
     pull_dt = base_dt - dt.timedelta(days=7)
-    print(pull_dt)
-    print(base_dt)
+    logging.info(pull_dt)
+    logging.info(base_dt)
     start_dt = pull_dt.strftime('%Y-%m-%d')
 
     # empty load tables
@@ -252,8 +257,8 @@ def main_kickoff():
     _ = get_bq_data(sql, client)
     # pull data for each ticker from Yahoo
     for ticker in tickers:
-        print('start')
-        print(ticker)
+        logging.info('start')
+        logging.info(ticker)
         (price_data, div_data) = get_hist_data(pull_dt, ticker)
         # if there is new data, write it to the load tables
         if len(price_data) > 0:
@@ -274,8 +279,8 @@ def main_kickoff():
     min_max_sql = min_max_sql.format(price_query_path)
     max_dt2 = get_bq_data(min_max_sql, client)
     new_max_dt = max_dt2['min_max_dt'].iloc[0]
-    print(new_max_dt)
-    print('end')
+    logging.info(new_max_dt)
+    logging.info('end')
 
     # check if we're in a new month. if yes, calculate + email returns
     if new_max_dt.month != base_dt.month:
