@@ -1,3 +1,5 @@
 # ignore checkpoints
-.ipynb_checkpoints/*
-*/.ipynb_checkpoints/*
+*ipynb_checkpoints*
+
+# ignore all csvs
+*.csv
