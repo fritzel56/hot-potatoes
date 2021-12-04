@@ -210,7 +210,7 @@ def error_email_body():
     err_message = traceback.format_exception(*err)
     err_str = '<br>'.join(err_message)
     err_str = err_str.replace('\n', '')
-    body = "There was an errorThere was an error with the hot potatoes run: <br> {}".format(err_str)
+    body = "There was an error with the hot potatoes run: <br> {}".format(err_str)
     return body
 
 
